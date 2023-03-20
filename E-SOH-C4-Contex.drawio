@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2023-03-20T13:20:52.472Z" agent="5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.3 Safari/605.1.15" etag="IwbxDr0_4ImwK9juHlQv" version="21.0.8" type="github">
+<mxfile host="app.diagrams.net" modified="2023-03-20T13:21:21.374Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36" etag="oWCqIDxJnqrqFaXc8p1p" version="16.2.2" type="github">
   <diagram name="Sivu-1" id="B4N91UEd-g8TSH05C_OA">
-    <mxGraphModel dx="1502" dy="281" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+    <mxGraphModel dx="1703" dy="18" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -84,6 +84,9 @@
             <mxGeometry x="620" y="1320" width="240" height="120" as="geometry" />
           </mxCell>
         </object>
+        <mxCell id="s8lhCj0RuMAzd9o6Rlvo-1" value="Test GK" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="1590" width="60" height="30" as="geometry" />
+        </mxCell>
         <mxCell id="J0wTn9ctNYQ0DKYxiaee-1" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="100" y="920" width="120" height="60" as="geometry" />
         </mxCell>
