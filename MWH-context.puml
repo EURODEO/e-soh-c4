@@ -1,0 +1,46 @@
+@startuml context-diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_TOP_DOWN()
+'LAYOUT_LEFT_RIGHT()
+
+Person(dataproducer, "Dataset Producer")
+Person(consumers, "Data Consumer", "A data consumer can be a human (advanced, intermediate or simple users) or a machine (e.g., a mobile app or a data portal). Simple and intermediate users search, inspect, and access data via an external interface (e.g., a mobile app or data portal). Advanced users acess the search, visualization, and distribution services directly. Open licenses and well documented data following international standards enable Interoperability and Reusability.")
+
+System(dmservice, "Event and Discovery Services", "Event Queue and Discovery Metadata Catalog.")
+System(productionhub, "Production systems", "Automated system for data production.")
+System(dist_systems, "Data Distribution Service", "OPeNDAP API on a Thredds server.")
+System(vis_systems, "Data Visualization Service", "OGC WMS, etc.")
+System(monitoring, "Monitoring", "Monitoring of infrastructure, metadata consistency, and status of OGC Web Services.")
+SystemDb(lustre, "Data storage", "Lustre file system.")
+SystemDb_Ext(oscar, "OSCAR", "Web resource with WIGOS metadata for all surface-based observing stations and platforms.")
+
+System(websites, "Custom websites and apps", "Custom websites (e.g., drupal) for dataset landing pages, for data search and access, etc..")
+
+Rel_U(consumers, dist_systems, "accesses data through", "https")
+Rel_U(consumers, dmservice, "finds data in", "https")
+Rel_U(consumers, vis_systems, "visualizes data through", "https")
+
+Rel(dataproducer, monitoring, "checks status through", "https")
+
+Rel(dataproducer, productionhub, "sets up data production in")
+
+Rel(productionhub, lustre, "stores data in")
+Rel_U(dist_systems, lustre, "accesses data in")
+Rel(productionhub, dmservice, "sends metadata to", "MQTT")
+Rel(productionhub, dmservice, "listens to", "MQTT")
+Rel_L(dmservice, oscar, "links to station metadata in", "http")
+
+Rel_U(vis_systems, lustre, "accesses data in")
+Rel_L(vis_systems, dist_systems, "accesses data in", "https")
+
+Rel_U(websites, dmservice, "finds data through", "https")
+Rel_U(websites, vis_systems, "visualizes data through", "https")
+Rel_U(websites, dist_systems, "accesses data through", "https")
+Rel_L(consumers, websites, "finds/accesses/uses data through", "https")
+
+
+
+SHOW_LEGEND()
+
+@enduml
