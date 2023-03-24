@@ -1,0 +1,80 @@
+@startuml discovery-metadata-service-container-diagram-future
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+'!include /home/mortenwh/lib/python/plantuml-stdlib/C4/C4_Container.puml
+
+'LAYOUT_TOP_DOWN()
+LAYOUT_LEFT_RIGHT()
+
+Person(consumers, "Data Consumer", "A data consumer can be a human (advanced, intermediate or simple users) or a machine (e.g., a mobile app or a data portal). Simple and intermediate users search, inspect, and access data via an external interface (e.g., a mobile app or data portal). Advanced users acess the search, visualization, and distribution services directly. Open licenses and well documented data following international standards enable Interoperability and Reusability.")
+
+Person(dataproducer, "Dataset Producer")
+
+System(productionhub, "Production", "Automated system for data production. ECFlow, PPI, etc. Uses the MMS client to post events to the event queue.")
+'System(dist_systems, "Data Distribution Services", "Primarily thredds/OPeNDAP.")
+'System(vis_systems, "Data Visualization Services", "Server side configurations for WMS, etc.")
+'System(monitoring, "Monitoring", "Monitoring of usage, metadata consistency, and status of services and production chains. Uses existing systems (e.g., prometheus/grafana).")
+
+System_Ext(ext_repo, "External Data Repository", "External data repository (e.g., OPeNDAP, CSW, OAI-PMH) that can be harvested.")
+
+System(websites, "Websites", "Websites (drupal) for DOI landing pages, UUID landing pages, and custom sites for data search and access, etc. (e.g., ADC, SIOS, satellittdata.no, etc.). The UUID landing pages are created dynamically from MMD that is read from SOLR. Prefixes/namespaces define the location of the landing pages, and the combination of a namespace and a UUID provides a Persistent IDentifier (PID). Landing pages need to be on a specific and permanent domain. As such, the address that we choose to use (also relevant for DOIs) can never be changed. We can, e.g., use no.met.adc, no.met.data, no.met.oda but then we need to create the corresponding domains (data.met.no, oda.met.no) and enable dynamic landing pages there.")
+
+System_Boundary(mserviceSystem, "Metadata Services") {
+  Container(val, "Validator", "Python DMCI", "Validation of metadata, e.g., MMD.")
+
+  Container(queue, "Event queue", "MMSD + NATS JetStream", "Event queue with events containing metadata relevant for the subscribers. Maintains history for allowing temporarily failing subscribers to catch up (persistence).")
+
+  Container(solr_agent, "SOLR Agent", "MMS + Python", "Using the MMS client, subscribes and listens for events of MMD create/update/delete, and pushes to DMCI API configured for SOLR.")
+
+  Container(backup_agent, "Backup Agent", "MMS + Python", "Using the MMS client, subscribes and listens for events of MMD create/update/delete, and pushes to DMCI API.")
+
+  Container(backup_agent, "Backup Agent", "DMCI", "Using the MMS client, subscribes and listens for events of MMD create/update/delete, and pushes to DMCI API configured for backup file storage.")
+  ContainerDb(file, "Metadata store", "file system", "Backup Dataset Discovery Metadata Store. Committed to git on regular intervals.")
+
+  ContainerDb(solr, "Metadata store", "SOLR", "Dataset Discovery Metadata Store (MMD).")
+
+  Container(csapi, "pycsw", "CSW", "CSW endpoint for search and harvesting. Serves INSPIRE, DIF, etc., compliant metadata. Currently using postgis as backend. This will be replaced by SOLR in a future version.")
+
+  Container(rebuilder, "Catalog rebuilder", "Python", "Rebuild metadata catalogs (e.g., pycsw, solr) from file storage.")
+
+  Container(harvester, "MMD harvester", "Python", "Reads metadata from external data repositories (e.g., thredds, various ISO19115 profiles, DCAT), translates to MMD, validates the MMD (internally; with looser requirements for the MMD metadata than those in the Validator) and pushes to the SOLR metadata store. This metadata does not need backup since it can be re-harvested when needed.")
+
+  Container(solr_ingest, "SOLR DMCI API", "Python DMCI", "DMCI API for SOLR storage of MMD metadata.")
+
+  Container(backup_ingest, "Backup DMCI API", "Python DMCI", "DMCI API for backup of MMD metadata.")
+
+}
+
+Rel_D(dataproducer, productionhub, "maintains and documents")
+
+Rel_D(productionhub, val, "validates metadata with", "https")
+Rel_D(productionhub, queue, "sends create/update/delete message to", "CloudEvent")
+Rel_D(productionhub, queue, "listens to", "NATS/MQTT")
+
+Rel_U(solr_agent, queue, "listens to", "NATS/MQTT")
+Rel_U(solr_agent, val, "validates MMD with", "https")
+
+Rel_U(backup_agent, queue, "listens to", "NATS/MQTT")
+Rel_U(backup_agent, val, "validates MMD with", "https")
+
+Rel_D(solr_agent, solr_ingest, "Create/Update/Delete", "MMD")
+Rel_D(backup_agent, backup_ingest, "Create/Update/Delete", "MMD")
+Rel_D(solr_ingest, solr, "Create", "MMD")
+
+Rel(harvester, solr_ingest, "Create", "MMD")
+Rel_R(harvester, ext_repo, "Harvest", "XML/netCDF-CF/..")
+Rel_U(harvester, val, "validates MMD with", "https")
+
+Rel_U(rebuilder, solr_ingest, "Create", "MMD")
+Rel_U(rebuilder, file, "rebuilds from", "MMD")
+
+Rel_D(backup_ingest, file, "writes backup to", "MMD")
+
+Rel_D(consumers, csapi, "finds dataset in", "CSW")
+Rel_D(csapi, solr, "read from", "?: MMD/ISO19115")
+
+Rel(websites, solr, "Read")
+Rel(consumers, websites, "Find/Access/Use", "https")
+
+SHOW_LEGEND()
+
+@enduml
