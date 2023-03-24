@@ -21,7 +21,7 @@ System(websites, "Websites", "Websites (drupal) for DOI landing pages, UUID land
 System_Boundary(mserviceSystem, "Metadata Services") {
   Container(val, "Validator", "Python DMCI", "Validation of metadata, e.g., MMD.")
 
-  Container(queue, "Event queue", "MMSD + NATS JetStream", "Event queue with events containing metadata relevant for the subscribers. Maintains history for allowing temporarily failing subscribers to catch up (persistence).")
+  ContainerQueue(queue, "Event queue", "MMSD + NATS JetStream", "Event queue with events containing metadata relevant for the subscribers. Maintains history for allowing temporarily failing subscribers to catch up (persistence).")
 
   Container(solr_agent, "SOLR Agent", "MMS + Python", "Using the MMS client, subscribes and listens for events of MMD create/update/delete, and pushes to DMCI API configured for SOLR.")
 
