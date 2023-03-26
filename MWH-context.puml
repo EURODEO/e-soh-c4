@@ -14,13 +14,15 @@ Enterprise_Boundary(nhms, "National Meteorological and Hydrological Service (NMH
 
   System_Boundary(e-soh, "E-SOH node"){
     SystemDb(store24, "Data storage", "File system for storage of 24 hours of data.")
-    SystemQueue(queue, "Event Queue (MQTT)", "WIS2 real-time data sharing by a publication/subscription (PubSub) mechanism based on the Message Queuing Protocol (MQP).")
-    SystemDb(discovery24, "Catalog", "Discovery Metadata Catalog. Database that can serve APIs.")
+    SystemQueue(queue, "Notification Service", "MQTT Event Queue. WIS2 real-time data sharing by a publication/subscription (PubSub) mechanism based on the Message Queuing Protocol (MQP).")
+    SystemDb(discovery24, "Catalog", "Discovery Metadata Catalog. Database that can serve APIs and landing pages.")
     System(agent, "Metadata agent", "Subscriber agent that listens for new events from the queue.")
-    System(edr, "OGC EDR", "The OGC EDR API searches for data according to user requests, lets the user define data collections (or new datasets), retrieves data, and packs the data in appropriate formats to be returned to the user.")
+    System(edr, "Processing", "The OGC EDR API searches for data according to user requests, lets the user define data collections (or new datasets), retrieves data, and packs the data in appropriate formats to be returned to the user. Could store metadata of retrieved datasets as well.") 
+    SystemDb(edr_store, "EDR Metadata store", "Possible storage of files with discovery metadata for datasets created by users with the EDR API. This could also be used to get usage metrics and trace data.")
     System(search, "Data search API", "E.g, OGC Records or CSW.")
     System(access, "Data access API", "E.g., OPEnDAP.")
     System(bufr, "BUFR exporter", "Tool to create BUFR files that will be posted to GTS by WIS2.0 systems. We need to now what and when (or how often).")
+    System(website, "Website", "Website for persistent dataset landing pages.")
   }
 }
 
@@ -29,16 +31,18 @@ System_Ext(wis2, "WIS2.0", "WIS2.0 system(s).")
 Rel_U(bufr, wis2, "posts to GTS via", "https")
 
 Rel(productionhub, queue, "posts metadata in", "MQTT")
-Rel_L(agent, queue, "listens for events from", "uri")
-Rel_R(agent, discovery24, "posts metadata in", "https")
+Rel_D(agent, queue, "listens for events from", "uri")
+Rel_D(agent, discovery24, "ingests metadata to", "https")
 Rel(discovery24, store24, "references data in", "uri")
-Rel(store24, datastore, "references data in", "uri")
-Rel(store24, oscar, "references metadata in", "uri")
-Rel(datastore, oscar, "references metadata in", "uri")
+Rel(discovery24, datastore, "references data in", "uri")
+Rel(discovery24, oscar, "references metadata in", "uri")
 Rel(edr, search, "finds data in", "https")
 Rel(edr, access, "accesses data in", "https")
 Rel(access, store24, "streams data from", "https")
 Rel(search, discovery24, "returns metadata from")
+Rel(website, discovery24, "serves dynamical landing pages for datasets in")
+Rel(website, edr_store, "serves dynamical landing pages for datasets in")
+Rel_L(edr, edr_store, "stores metadata in")
 
 Rel(consumers, search, "finds data in", "https")
 Rel(consumers, access, "accesses data in", "https")
