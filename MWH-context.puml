@@ -33,8 +33,8 @@ Rel_U(bufr, wis2, "posts to GTS via", "https")
 Rel(productionhub, queue, "posts metadata in", "MQTT")
 Rel_D(agent, queue, "listens for events from", "uri")
 Rel_D(agent, discovery24, "ingests metadata to", "https")
-Rel(discovery24, store24, "references data in", "uri")
-Rel(discovery24, datastore, "references data in", "uri")
+Rel(agent, store24, "stores data in", "uri")
+Rel(agent, datastore, "get data from", "uri")
 Rel(discovery24, oscar, "references metadata in", "uri")
 Rel(edr, search, "finds data in", "https")
 Rel(edr, access, "accesses data in", "https")
@@ -51,7 +51,6 @@ Rel(consumers, edr, "gets datasets from", "https")
 Rel(dataproducer, productionhub, "sets up data production in")
 
 Rel(productionhub, datastore, "appends data to")
-Rel(productionhub, store24, "stores data in")
 
 SHOW_LEGEND()
 
