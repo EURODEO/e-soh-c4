@@ -21,7 +21,7 @@ Enterprise_Boundary(nhms, "National Meteorological and Hydrological Service (NMH
     SystemDb(edr_store, "EDR Metadata store", "Possible storage of files with discovery metadata for datasets created by users with the EDR API. This could also be used to get usage metrics and trace data.")
     System(search, "Data search API", "E.g, OGC Records or CSW.")
     System(access, "Data access API", "E.g., OPEnDAP.")
-    System(bufr, "BUFR exporter", "Tool to create BUFR files that will be posted to GTS by WIS2.0 systems. We need to now what and when (or how often).")
+    System(bufr, "BUFR exporter", "Tool to create BUFR files that will be posted to GTS by WIS2.0 systems. We need to now what and when (or how often). Could possibly also generate other file based products.")
     System(website, "Website", "Website for persistent dataset landing pages.")
   }
 }
@@ -32,9 +32,9 @@ Rel_U(bufr, wis2, "posts to GTS via", "https")
 
 Rel(productionhub, queue, "posts metadata in", "MQTT")
 Rel_D(agent, queue, "listens for events from", "uri")
-Rel_D(agent, discovery24, "ingests metadata to", "https")
+Rel_D(agent, discovery24, "ingests metadata in", "https")
 Rel(agent, store24, "stores data in", "uri")
-Rel(agent, datastore, "get data from", "uri")
+Rel(agent, datastore, "gets data from", "uri")
 Rel(discovery24, oscar, "references metadata in", "uri")
 Rel(edr, search, "finds data in", "https")
 Rel(edr, access, "accesses data in", "https")
