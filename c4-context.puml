@@ -5,13 +5,13 @@ AddElementTag("microService", $shape=EightSidedShape(), $bgColor="CornflowerBlue
 
 System_Ext(FEMDICatalog, "FEMDI Catalog", "FEMDI Datasets Catalog.")
 
-System_Ext(wis2, "WIS2.0", "Global cache, broker and message transformation.")
+System_Ext(wis2, "WIS2.0", "Global cache, broker, message transformation and metadata catalog.")
 
 
 Person(APIConsumer, "API Consumer")
 
 System_Boundary(ESOH, "Federated E-SOH instance"){
-    ContainerQueue(queue, "Notification Service", "", "MQTT Event Queue. WIS2 real-time data sharing by a publication/subscription (PubSub) mechanism based on the Message Queuing Protocol (MQP).")
+    ContainerQueue(queue, "Notification Service and Replay API", "", "MQTT Event Queue. WIS2 real-time data sharing by a publication/subscription (PubSub) mechanism based on the Message Queuing Protocol (MQP).")
     Container(its, "Ingest, Transform, Store", "", "")
     Container(edr, "Search and Access API", "OGC EDR", "", $tags = "microService")
     Container(records, "Search API", "OGC Records", "", $tags = "microService")
