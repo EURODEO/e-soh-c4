@@ -1,0 +1,30 @@
+@startuml "esoh-c4-context"
+!include <C4/C4_Context>
+
+System_Ext(GlobalCatalog, "Global Catalog", "WIS 2 Global Datasets catalog.")
+System_Ext(FEMDICatalog, "FEMDI Catalog", "FEMDI Datasets Catalog.")
+System_Ext(GlobalCache, "Global Cache", "WIS 2 Global cache of data.")
+System_Ext(GlobalBroker, "Global Broker", "WIS 2 Global broker of MQTT events.")
+System_Ext(WIS2GTS, "WIS2 To GTS", "Transform WIS 2.0 data and forward to GTS.")
+
+Person(APIConsumer, "API Consumer")
+
+System(ESOH, "E-SOH", "Federated E-SOH instance")
+
+System_Ext(Oscar, "Oscar", "Wigos DB")
+System_Ext(ObsCollection,"Obs Collection", "NMHS Observation Collection system")
+
+Rel_D(GlobalCatalog, ESOH, "Harvest metadata", "HTTPS/OGC-API-Records")
+Rel_D(GlobalCache, ESOH, "Harvest data", "HTTPS/File download")
+Rel_R(GlobalBroker, ESOH, "Listen for events", "MQTT")
+Rel_R(GlobalBroker, ESOH, "Backfill missing events", "Replay API")
+
+Rel_L(WIS2GTS, ESOH, "Harvest data", "HTTPS/Bufr file download")
+
+Rel_D(FEMDICatalog, ESOH, "Harvest metadata", "HTTPS/OGC-API-Records")
+Rel_D(APIConsumer, ESOH, "Query for data", "OGC-API-EDR")
+
+Rel_D(ESOH, Oscar, "Harvest station metadata", "?")
+Rel_U(ObsCollection, ESOH, "Ingest observations data", "?")
+
+@enduml
