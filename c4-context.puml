@@ -1,0 +1,47 @@
+@startuml "esoh-c4-context"
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+AddElementTag("microService", $shape=EightSidedShape(), $bgColor="CornflowerBlue", $fontColor="white", $legendText="micro service\neight sided")
+
+System_Ext(FEMDICatalog, "FEMDI Catalog", "FEMDI Datasets Catalog.")
+
+System_Ext(wis2, "WIS2.0", "Global cache, broker and message transformation.")
+
+
+Person(APIConsumer, "API Consumer")
+
+System_Boundary(ESOH, "Federated E-SOH instance"){
+    ContainerQueue(queue, "Notification Service", "", "MQTT Event Queue. WIS2 real-time data sharing by a publication/subscription (PubSub) mechanism based on the Message Queuing Protocol (MQP).")
+    Container(its, "Ingest, Transform, Store", "", "")
+    Container(edr, "Search and Access API", "OGC EDR", "", $tags = "microService")
+    Container(records, "Search API", "OGC Records", "", $tags = "microService")
+    Container(bufr_generator, "Product generation and storage", "", "BUFR files are created and stored for 24 hours.")
+    ContainerDb(metadata_store, "Discovery metadata store", "database", "")
+    ContainerDb(data_store, "Observations data store", "", "Storage of 24 hours of data.")
+    Container(lmar, "Logging, monitoring, alerting and reporting", "", "")
+}
+
+
+
+System_Ext(Oscar, "Oscar", "Wigos DB")
+System_Ext(ObsCollection,"Obs Collection", "NMHS Observation Collection system")
+
+Rel(bufr_generator, queue, "pushes message about product availability", "MQTT")
+
+Rel(its, data_store, "adds data in", "")
+Rel(its, metadata_store, "adds discovery metadata in", "")
+Rel(its, queue, "pushes message saying that data can be found in the API(s)", "MQTT")
+
+Rel(wis2, metadata_store, "Harvest metadata", "HTTPS/OGC-API-Records")
+Rel(wis2, queue, "Listen for events", "MQTT")
+Rel(wis2, queue, "Backfill missing events", "Replay API")
+
+Rel(wis2, bufr_generator, "gets data from", "BUFR")
+
+Rel(FEMDICatalog, ESOH, "harvest metadata from", "HTTPS/OGC-API-Records")
+Rel(APIConsumer, ESOH, "query for data in", "OGC-API-EDR")
+
+Rel(ESOH, Oscar, "Harvest station metadata", "?")
+Rel(ObsCollection, ESOH, "Ingest observations data", "?")
+
+@enduml
