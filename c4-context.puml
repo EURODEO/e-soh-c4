@@ -11,7 +11,7 @@ System_Ext(wis2, "WIS2.0", "Global cache, broker, message transformation and met
 Person(consumer, "Data Consumer")
 
 Enterprise_Boundary(esoh_all, "E-SOH federated system"){
-  Container(proxy, "Proxy E-SOH API", "", "Central component linking the E-SOH local instances to provide a unified interface.")
+  Container(proxy, "Central E-SOH API end-point", "", "Central end-point linking the E-SOH local instances to provide a unified interface.")
 
   System_Boundary(esoh_fed, "E-SOH local instance"){
     ContainerQueue(queue, "Notification Service and Replay API", "", "MQTT Event Queue. WIS2 real-time data sharing by a publication/subscription (PubSub) mechanism based on the Message Queuing Protocol (MQP).")
