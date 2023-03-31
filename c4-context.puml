@@ -3,30 +3,36 @@
 
 AddElementTag("microService", $shape=EightSidedShape(), $bgColor="CornflowerBlue", $fontColor="white", $legendText="micro service\neight sided")
 
-System_Ext(FEMDICatalog, "FEMDI Catalog", "FEMDI Datasets Catalog.")
+System_Ext(femdi, "FEMDI", "Includes the FEMDI gateway, message broker, metadata catalog and authentication and authorization.")
 
 System_Ext(wis2, "WIS2.0", "Global cache, broker, message transformation and metadata catalog.")
 
 
-Person(APIConsumer, "API Consumer")
+Person(consumer, "Data Consumer")
 
-System_Boundary(ESOH, "Federated E-SOH instance"){
+Enterprise_Boundary(esoh_all, "E-SOH federated system"){
+  Container(proxy, "Proxy E-SOH API", "", "Central component linking the E-SOH local instances to provide a unified interface.")
+
+  System_Boundary(esoh_fed, "E-SOH local instance"){
     ContainerQueue(queue, "Notification Service and Replay API", "", "MQTT Event Queue. WIS2 real-time data sharing by a publication/subscription (PubSub) mechanism based on the Message Queuing Protocol (MQP).")
-    Container(its, "Ingest, Transform, Store", "", "")
-    Container(edr, "Search and Access API", "OGC EDR", "", $tags = "microService")
-    Container(records, "Search API", "OGC Records", "", $tags = "microService")
+    Container(its, "Ingest, Transform, Store", "", "The ITS system may have to enrich the metadata of somedatasets, e.g., input BUFR files that are missing location metadata but contain the WIGOS identification.")
+    Container(edr, "Search and Access API", "OGC EDR", "Direct local access can be enabled depending on the local data policy.", $tags = "microService")
+    Container(records, "Search API", "OGC Records", "Direct local access can be enabled depending on the local data policy.", $tags = "microService")
     Container(bufr_generator, "BUFR generation", "", "BUFR files are created to maintain backward compatibility.")
     ContainerDb(data_store, "Data and metadata store", "", "Storage of 24 hours of data.")
     Container(lmar, "Logging, monitoring, alerting and reporting", "", "")
+  }
 }
 
+System_Ext(oscar, "Oscar", "Wigos DB")
+System_Ext(ObsCollection,"Observations Collection", "NMHS Observation Collection system")
 
-
-System_Ext(Oscar, "Oscar", "Wigos DB")
-System_Ext(ObsCollection,"Obs Collection", "NMHS Observation Collection system")
-
+Rel(femdi, queue, "listens for events", "MQTT")
+Rel(data_store, femdi, "references peristent metadata in", "uri")
+Rel(edr,  data_store, "Search and access", "")
+Rel(records, data_store, "Search", "")
 Rel(bufr_generator, queue, "pushes message about product availability", "MQTT")
-Rel(bufr_generator, data_store, "stores data in", "")
+Rel(bufr_generator, data_store, "stores data and metadata in", "")
 
 Rel(its, data_store, "adds data in", "")
 Rel(its, data_store, "adds discovery metadata in", "")
@@ -38,10 +44,16 @@ Rel(wis2, queue, "Backfill missing events", "Replay API")
 
 Rel(wis2, bufr_generator, "gets data from", "BUFR")
 
-Rel(FEMDICatalog, ESOH, "harvest metadata from", "HTTPS/OGC-API-Records")
-Rel(APIConsumer, ESOH, "query for data in", "OGC-API-EDR")
+Rel(consumer, femdi, "searches and accesses data in", "https")
+Rel(consumer, femdi, "searches for data in", "https")
+Rel(consumer, femdi, "listens for events in", "MQTT")
+Rel(consumer, wis2, "listens for events in", "MQTT")
+Rel(proxy, edr, "gateway to", "https")
+Rel(proxy, records, "gateway to", "https")
+Rel(femdi, proxy, "gateway to", "https")
+Rel(femdi, proxy, "gateway to", "https")
 
-Rel(ESOH, Oscar, "Harvest station metadata", "?")
-Rel(ObsCollection, ESOH, "Ingest observations data", "?")
+Rel_U(its, oscar, "gets station metadata from", "?")
+Rel(ObsCollection, its, "observations data to", "?")
 
 @enduml
