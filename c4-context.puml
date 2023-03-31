@@ -1,46 +1,52 @@
 @startuml "c4-context"
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
 AddElementTag("microService", $shape=EightSidedShape(), $bgColor="CornflowerBlue", $fontColor="white", $legendText="micro service\neight sided")
 
 System_Ext(femdi, "FEMDI", "Includes the FEMDI gateway, message broker, metadata catalog and authentication and authorization.")
 
-System_Ext(wis2, "WIS2.0", "Global cache, broker, message transformation and metadata catalog.")
+System_Ext(wis2, "WIS2.0", "Global cache, broker, message transformation and metadata catalog. WIS2.0 takes care of publishing the BUFR files on GTS.")
 
 
 Person(consumer, "Data Consumer")
 
 Enterprise_Boundary(esoh_all, "E-SOH federated system"){
-  Container(proxy, "Central E-SOH API end-point", "", "Central end-point linking the E-SOH local instances to provide a unified interface.")
+  System(proxy, "Central E-SOH API end-point", "Central end-point linking the E-SOH local instances to provide a unified interface.")
 
   System_Boundary(esoh_fed, "E-SOH local instance"){
-    ContainerQueue(queue, "Notification Service and Replay API", "", "MQTT Event Queue. WIS2 real-time data sharing by a publication/subscription (PubSub) mechanism based on the Message Queuing Protocol (MQP).")
-    Container(its, "Ingest, Transform, Store", "", "The ITS system may have to enrich the metadata of somedatasets, e.g., input BUFR files that are missing location metadata but contain the WIGOS identification.")
-    Container(edr, "Search and Access API", "OGC EDR", "Direct local access can be enabled depending on the local data policy.", $tags = "microService")
-    Container(records, "Search API", "OGC Records", "Direct local access can be enabled depending on the local data policy.", $tags = "microService")
-    Container(bufr_generator, "BUFR generation", "", "BUFR files are created to maintain backward compatibility.")
-    ContainerDb(data_store, "Data and metadata store", "", "Storage of 24 hours of data.")
-    Container(lmar, "Logging, monitoring, alerting and reporting", "", "")
+    SystemQueue(queue, "Notification Service", "MQTT Event Queue. WIS2 real-time data sharing by a publication/subscription (PubSub) mechanism based on the Message Queuing Protocol (MQP).")
+
+    System(queries, "Search, Access and Replay APIs", "OGC EDR and Records. Replay API is backup for the ITS system, and queue replay. Direct local access can be enabled depending on the local data policy.", $tags = "microService")
+
+    System(its, "Ingest, Transform, Store", "The ITS system may have to enrich the metadata of somedatasets, e.g., input BUFR files that are missing location metadata but contain the WIGOS identification.")
+
+    'System(replay, "Replay API", "Backup for the ITS system, and queue replay.", $tags = "microService")
+    'System(edr, "Search and Access API", "OGC EDR. Direct local access can be enabled depending on the local data policy.", $tags = "microService")
+    'System(records, "Search API", "OGC Records. Direct local access can be enabled depending on the local data policy.", $tags = "microService")
+
+    System(bufr_generator, "BUFR generation", "BUFR files are created to maintain backward compatibility.")
+    System(data_store, "Data and metadata store", "Storage of 24 hours of data.")
+    System(lmar, "Logging, monitoring, alerting and reporting", "")
   }
 }
 
 System_Ext(oscar, "Oscar", "Wigos DB")
 System_Ext(ObsCollection,"Observations Collection", "NMHS Observation Collection system")
 
+Rel(its, queries, "rebuild")
+Rel(wis2, queries, "catch up with missed messages from the queue")
 Rel(femdi, queue, "listens for events", "MQTT")
 Rel(data_store, femdi, "references peristent metadata in", "uri")
-Rel(edr,  data_store, "Search and access", "")
-Rel(records, data_store, "Search", "")
-Rel(bufr_generator, queue, "pushes message about product availability", "MQTT")
-Rel(bufr_generator, data_store, "stores data and metadata in", "")
+Rel(queries,  data_store, "search and access", "")
+Rel(queries,  femdi, "search and access data older than 24 hours in", "https")
+Rel(queries, data_store, "Search", "")
+Rel(bufr_generator, queries, "finds and gets data from", "")
 
 Rel(its, data_store, "adds data in", "")
 Rel(its, data_store, "adds discovery metadata in", "")
 Rel(its, queue, "pushes message saying that data can be found in the API(s)", "MQTT")
 
-Rel(wis2, data_store, "Harvest metadata", "HTTPS/OGC-API-Records")
-Rel(wis2, queue, "Listen for events", "MQTT")
-Rel(wis2, queue, "Backfill missing events", "Replay API")
+Rel(wis2, queue, "listens for events from", "MQTT")
 
 Rel(wis2, bufr_generator, "gets data from", "BUFR")
 
@@ -48,8 +54,8 @@ Rel(consumer, femdi, "searches and accesses data in", "https")
 Rel(consumer, femdi, "searches for data in", "https")
 Rel(consumer, femdi, "listens for events in", "MQTT")
 Rel(consumer, wis2, "listens for events in", "MQTT")
-Rel(proxy, edr, "gateway to", "https")
-Rel(proxy, records, "gateway to", "https")
+Rel(proxy, queries, "gateway to", "https")
+Rel(proxy, queries, "gateway to", "https")
 Rel(femdi, proxy, "gateway to", "https")
 Rel(femdi, proxy, "gateway to", "https")
 
