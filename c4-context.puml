@@ -20,8 +20,6 @@ Enterprise_Boundary(esoh_all, "E-SOH federated system"){
 
     System(its, "Ingest, Transform, Store", "The ITS system may have to enrich the metadata of somedatasets, e.g., input BUFR files that are missing location metadata but contain the WIGOS identification.")
 
-    'System(replay, "Replay API", "Backup for the ITS system, and queue replay.", $tags = "microService")
-    'System(edr, "Search and Access API", "OGC EDR. Direct local access can be enabled depending on the local data policy.", $tags = "microService")
     'System(records, "Search API", "OGC Records. Direct local access can be enabled depending on the local data policy.", $tags = "microService")
 
     System(bufr_generator, "BUFR generation", "BUFR files are created to maintain backward compatibility.")
@@ -33,33 +31,29 @@ Enterprise_Boundary(esoh_all, "E-SOH federated system"){
 System_Ext(oscar, "Oscar", "Wigos DB")
 System_Ext(ObsCollection,"Observations Collection", "NMHS Observation Collection system")
 
-Rel(its, queries, "rebuild")
-Rel(wis2, queries, "catch up with missed messages from the queue")
-Rel(femdi, queue, "listens for events", "MQTT")
-Rel(data_store, femdi, "references peristent metadata in", "uri")
+Rel(data_store, queries, "rebuilds database from", "https")
+Rel(wis2, queries, "catches up with missed events from", "https")
+Rel(femdi, queue, "listens for events from", "MQTT")
+Rel(data_store, femdi, "references persistent metadata in", "uri")
 Rel(queries,  data_store, "search and access", "")
 Rel(queries,  femdi, "search and access data older than 24 hours in", "https")
-Rel(queries, data_store, "Search", "")
-Rel(bufr_generator, queries, "finds and gets data from", "")
+Rel(bufr_generator, queries, "finds and gets data from", "https")
 
-Rel(its, data_store, "adds data in", "")
-Rel(its, data_store, "adds discovery metadata in", "")
-Rel(its, queue, "pushes message saying that data can be found in the API(s)", "MQTT")
+Rel(its, data_store, "adds (meta)data in", "geojson")
+Rel(data_store, queue, "sends data notification to", "MQTT")
 
 Rel(wis2, queue, "listens for events from", "MQTT")
 
 Rel(wis2, bufr_generator, "gets data from", "BUFR")
 
 Rel(consumer, femdi, "searches and accesses data in", "https")
-Rel(consumer, femdi, "searches for data in", "https")
-Rel(consumer, femdi, "listens for events in", "MQTT")
-Rel(consumer, wis2, "listens for events in", "MQTT")
+Rel(consumer, femdi, "listens for events from", "MQTT")
+Rel(consumer, wis2, "searches and accesses data in", "https")
+Rel(consumer, wis2, "listens for events from", "MQTT")
 Rel(proxy, queries, "gateway to", "https")
-Rel(proxy, queries, "gateway to", "https")
-Rel(femdi, proxy, "gateway to", "https")
 Rel(femdi, proxy, "gateway to", "https")
 
-Rel_U(its, oscar, "gets station metadata from", "?")
+Rel(its, oscar, "gets station metadata from", "https")
 Rel(ObsCollection, its, "observations data to", "?")
 
 @enduml

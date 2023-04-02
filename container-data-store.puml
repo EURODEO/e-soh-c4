@@ -1,0 +1,31 @@
+@startuml "c4-container-data-store"
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+AddElementTag("microService", $shape=EightSidedShape(), $bgColor="CornflowerBlue", $fontColor="white", $legendText="micro service\neight sided")
+
+Person(consumer, "Data Consumer")
+
+System(its, "Ingest, Transform, Store", "The ITS system may have to enrich the metadata of somedatasets, e.g., input BUFR files that are missing location metadata but contain the WIGOS identification.")
+
+SystemQueue(queue, "Notification Service", "MQTT Event Queue. WIS2 real-time data sharing by a publication/subscription (PubSub) mechanism based on the Message Queuing Protocol (MQP).")
+
+Container(edr, "OGC EDR", "", "Search and access API.")
+Container(replay, "Replay API", "", "Backup for the ITS system, and queue replay.", $tags = "microService")
+Container(edr, "Search and Access APIs", "", "OGC EDR and OGC Records. Direct local access can be enabled depending on the local data policy.", $tags = "microService")
+ContainerDb(elastic, "Elastic", "JSON", "Source of truth.")
+ContainerDb(db, "Discovery DB", "PostGIS?", "Search interface. H-Scaling.")
+Container(bootstrap, "Bootstrap", "", "Initial")
+
+Rel(its, elastic, "adds (meta)data in", "geojson")
+Rel(elastic, db, "ingests discovery metadata in", "")
+Rel(elastic, queue, "sends data notification to", "MQTT")
+Rel(elastic, replay, "?", "")
+Rel(replay, elastic, "?", "")
+Rel(bootstrap, replay, "?", "")
+Rel(bootstrap, db, "?", "")
+Rel(consumer, queue, "listens to events from", "https")
+Rel(consumer, replay, "gets missed events from", "https")
+Rel(edr, db, "searches data in", "")
+Rel(edr, elastic, "gets data from?", "")
+
+@enduml
