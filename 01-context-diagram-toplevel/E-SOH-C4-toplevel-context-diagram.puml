@@ -12,10 +12,9 @@ LAYOUT_WITH_LEGEND()
 
 title E-SOH top-level C4 context diagram (C4 model: https://c4model.com/)
 
-'System_Boundary(c0, "Observation & metadata input") {
-System_Boundary(c0, "Input") {
+System_Boundary(c0, "Observation & metadata input") {
     System_Ext(srcsys, "Observation data and related metadata", "Observations Collection and Generation. Networks and systems operated by members, 3rd parties and members of the public.")
-    System_Ext(oscar, "WMO OSCAR", "WIGOS metadata for all surface-based observing stations and platforms.")
+'    System_Ext(oscar, "WMO OSCAR", "WIGOS metadata for all surface-based observing stations and platforms.")
 }
 
 System_Boundary(c1, "E-SOH") {
@@ -23,7 +22,6 @@ System_Boundary(c1, "E-SOH") {
 }
 
 Rel_R(srcsys, esoh, "Data&metadata")
-Rel_R(oscar, esoh, "Metadata")
 
 System_Ext(consys, "Consumer systems", "Existing and new consumer systems")
 Person_Ext(enduser, "Data end-users", "Data end-users will connect to consumer systems")
@@ -31,7 +29,6 @@ Person_Ext(enduser, "Data end-users", "Data end-users will connect to consumer s
 Rel_R(esoh, consys, "Data&metadata")
 
 'layout wishes:
-Lay_U(oscar, srcsys)
 Lay_R(consys, enduser)
 
 
