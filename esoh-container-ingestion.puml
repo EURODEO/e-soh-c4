@@ -1,4 +1,4 @@
-@startuml "esoh-c4-container ingestion"
+@startuml "esoh-c4-container-ingestion"
 !include <C4/C4_Container>
 
 System_Ext(NMHSObs1,"NMHS 1 Observation System", "NMHS 1 Collect, quality control and distribute observations.")
