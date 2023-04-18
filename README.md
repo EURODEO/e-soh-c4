@@ -1,8 +1,8 @@
 # E-SOH C4 Architecture
 
 ## Quick Start (PlantUML & C4)
-* install plantUML from your favourite package repository (e.g. `sudo apt install plantuml`)
-* install plantUML plugin to vscode
+* install PlantUML from your favourite package repository (e.g. `sudo apt install plantuml`)
+* install PlantUML plugin to vscode
 * open .puml file from cloned repo and press alt-D (option + D on MacOS) to open preview tab
 * enjoy editing
 * commit and push changes to git repo
