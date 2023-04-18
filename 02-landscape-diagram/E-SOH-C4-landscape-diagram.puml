@@ -1,0 +1,58 @@
+@startuml "E-SOH-C4-landscape-diagram"
+
+!include <C4/C4_Container>
+
+'!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+' or use local:
+'!include C4_Context.puml
+
+LAYOUT_TOP_DOWN()
+'LAYOUT_AS_SKETCH()
+'LAYOUT_WITH_LEGEND()
+
+title E-SOH C4 landscape diagram (C4 model: https://c4model.com/)
+
+'AddElementTag("microService", $shape=EightSidedShape(), $bgColor="CornflowerBlue", $fontColor="white", $legendText="micro service\neight sided")
+
+System_Ext(wis2gts, "WMO WIS2.0 GTS relay", "Relay the BUFR files into the GTS.")
+
+Person(consumer, "Data Consumer")
+
+Enterprise_Boundary(esoh_all, "E-SOH federated system"){
+  System(centralapi, "Central E-SOH API end-point", "Central end-point linking the E-SOH local instances to provide a unified interface.")
+
+  System_Boundary(esoh_fed, "E-SOH local instance"){
+    System(esoh, "E-SOH instance", "")
+  }
+}
+
+', "Includes the FEMDI gateway, message broker, metadata catalog and authentication and authorization.") {
+
+Enterprise_Boundary(femdi_all, "FEMDI") {
+    
+    System_Ext("femdigw", "FEMDI gateway","")
+
+    ' WIS2 box:
+    System_Boundary(wis2shared_all, "WIS2 shared services"){
+    System_Ext(wis2shared, "WIS2.0 Shared Services", "Catalogue, Message Broker, Service manager")
+  }
+
+}
+
+SystemDb_Ext(oscar, "WMO OSCAR", "WMO WIGOS metadata DB")
+System_Ext(obscoll,"Observations Collection", "NMHS Observation Collection system")
+
+'relations: 
+Rel_R("obscoll", "esoh", "ingest data")
+Rel("esoh", "centralapi", "federated queries")
+Rel_L("esoh", "wis2gts","BUFR data")
+Rel_L("oscar", "esoh", "metadata")
+Rel("centralapi", "consumer", "query data")
+'Rel("consumer", "femdigw","query data")
+Rel("consumer", "esoh","query data")
+
+'layout:
+Lay_U("oscar", "obscoll")
+Lay_L("obscoll","esoh")
+
+@enduml
