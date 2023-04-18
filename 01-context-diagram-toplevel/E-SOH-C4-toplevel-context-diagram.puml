@@ -1,6 +1,6 @@
 @startuml "E-SOH-C4-toplevel-context-diagram"
 
-!include <C4/C4_Container>
+!include <C4/C4_Context>
 
 '!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 ' or use local:
