@@ -1,0 +1,59 @@
+@startuml "c4-context"
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+AddElementTag("microService", $shape=EightSidedShape(), $bgColor="CornflowerBlue", $fontColor="white", $legendText="micro service\neight sided")
+
+System_Ext(femdi, "FEMDI", "Includes the FEMDI gateway, message broker, metadata catalog and authentication and authorization.")
+
+System_Ext(wis2, "WIS2.0", "Global cache, broker, message transformation and metadata catalog. WIS2.0 takes care of publishing the BUFR files on GTS.")
+
+
+Person(consumer, "Data Consumer")
+
+Enterprise_Boundary(esoh_all, "E-SOH federated system"){
+  System(proxy, "Central E-SOH API end-point", "Central end-point linking the E-SOH local instances to provide a unified interface.")
+
+  System_Boundary(esoh_fed, "E-SOH local instance"){
+    SystemQueue(queue, "Notification Service", "MQTT Event Queue. WIS2 real-time data sharing by a publication/subscription (PubSub) mechanism based on the Message Queuing Protocol (MQP).")
+
+    System(queries, "Search, Access and Replay APIs", "OGC EDR and Records. Replay API is backup for the ITS system, and queue replay. Direct local access can be enabled depending on the local data policy.", $tags = "microService")
+
+    System(its, "Ingest, Transform, Store", "The ITS system may have to enrich the metadata of somedatasets, e.g., input BUFR files that are missing location metadata but contain the WIGOS identification.")
+
+    'System(records, "Search API", "OGC Records. Direct local access can be enabled depending on the local data policy.", $tags = "microService")
+
+    System(bufr_generator, "BUFR generation", "BUFR files are created to maintain backward compatibility.")
+    System(data_store, "Data and metadata store", "Storage of 24 hours of data.")
+    System(lmar, "Logging, monitoring, alerting and reporting", "")
+  }
+}
+
+System_Ext(oscar, "Oscar", "Wigos DB")
+System_Ext(ObsCollection,"Observations Collection", "NMHS Observation Collection system")
+
+Rel(data_store, queries, "rebuilds database from", "https")
+Rel(wis2, queries, "catches up with missed events from", "https")
+Rel(femdi, queue, "listens for events from", "MQTT")
+Rel(data_store, femdi, "references persistent metadata in", "uri")
+Rel(queries,  data_store, "search and access", "")
+Rel(queries,  femdi, "search and access data older than 24 hours in", "https")
+Rel(bufr_generator, queries, "finds and gets data from", "https")
+
+Rel(its, data_store, "adds (meta)data in", "geojson")
+Rel(data_store, queue, "sends data notification to", "MQTT")
+
+Rel(wis2, queue, "listens for events from", "MQTT")
+
+Rel(wis2, bufr_generator, "gets data from", "BUFR")
+
+Rel(consumer, femdi, "searches and accesses data in", "https")
+Rel(consumer, femdi, "listens for events from", "MQTT")
+Rel(consumer, wis2, "searches and accesses data in", "https")
+Rel(consumer, wis2, "listens for events from", "MQTT")
+Rel(proxy, queries, "gateway to", "https")
+Rel(femdi, proxy, "gateway to", "https")
+
+Rel(its, oscar, "gets station metadata from", "https")
+Rel(ObsCollection, its, "observations data to", "?")
+
+@enduml
