@@ -6,7 +6,7 @@ System_Ext(NMHSObs2,"NMHS 2 Observation System", "NMHS 2 Collect, quality contro
 System_Ext(NMHSObs3,"NMHS 3 Observation System", "NMHS 3 Collect, quality control and distribute observations.")
 
 System_Boundary(b1, "E-SOH ingestion") {
-    ContainerDb(DataStore, "E-soh datastore", "??")
+    ContainerDb(data_store, "E-soh datastore", "??")
     Container(IngestionService, "Ingestion REST service", "Golang?", "Validate data and metadata and forward to datastore.")
     Container(SingleBufrReceiver, "Bufr files decoder", "Golang?", "Receive, validate bufr, transform and forward observations")
     Container(CustomBufrReceiver, "Bufr files decoder for weird stuff", "Golang?", "Receive, validate weird bufr, transform and forward observations")
@@ -16,8 +16,7 @@ Rel_U(SingleBufrReceiver, IngestionService, "Sends transformed bufr data to", "h
 Rel_U(CustomBufrReceiver, IngestionService, "Sends transformed bufr data to", "https/json")
 Rel_U(NMHSObs1, SingleBufrReceiver, "Sends bufr files to", "http POST")
 Rel_U(NMHSObs2, CustomBufrReceiver, "Sends bufr files to", "?")
-
 Rel_U(NMHSObs3, IngestionService, " Sends observations to", "https/json")
+Rel_R(IngestionService, data_store, "Stores data in", "?")
 
-Rel_R(IngestionService, DataStore, "Stores data in", "?")
 @enduml

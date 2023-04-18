@@ -1,5 +1,5 @@
-@startuml "c4-context"
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+@startuml "c4-container-diagram"
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
 AddElementTag("microService", $shape=EightSidedShape(), $bgColor="CornflowerBlue", $fontColor="white", $legendText="micro service\neight sided")
 
@@ -7,6 +7,9 @@ System_Ext(femdi, "FEMDI", "Includes the FEMDI gateway, message broker, metadata
 
 System_Ext(wis2, "WIS2.0", "Global cache, broker, message transformation and metadata catalog. WIS2.0 takes care of publishing the BUFR files on GTS.")
 
+System_Ext(NMHSObs1,"NMHS 1 Observation System", "NMHS 1 Collect, quality control and distribute observations.")
+System_Ext(NMHSObs2,"NMHS 2 Observation System", "NMHS 2 Collect, quality control and distribute observations.")
+System_Ext(NMHSObs3,"NMHS 3 Observation System", "NMHS 3 Collect, quality control and distribute observations.")
 
 Person(consumer, "Data Consumer")
 
@@ -14,33 +17,38 @@ Enterprise_Boundary(esoh_all, "E-SOH federated system"){
   System(proxy, "Central E-SOH API end-point", "Central end-point linking the E-SOH local instances to provide a unified interface.")
 
   System_Boundary(esoh_fed, "E-SOH local instance"){
-    SystemQueue(queue, "Notification Service", "MQTT Event Queue. WIS2 real-time data sharing by a publication/subscription (PubSub) mechanism based on the Message Queuing Protocol (MQP).")
+    ContainerQueue(queue, "Notification Service", "nats/mosquitto/..?", "MQTT Event Queue. WIS2 real-time data sharing by a publication/subscription (PubSub) mechanism based on the Message Queuing Protocol (MQP).")
 
-    System(queries, "Search, Access and Replay APIs", "OGC EDR and Records. Replay API is backup for the ITS system, and queue replay. Direct local access can be enabled depending on the local data policy.", $tags = "microService")
+    Container(queries, "Search, Access and Replay APIs", "e.g., pygeoapi", "OGC EDR and Records. Replay API is backup for the ITS system, and queue replay. Direct local access can be enabled depending on the local data policy.", $tags = "microService")
 
-    System(its, "Ingest, Transform, Store", "The ITS system may have to enrich the metadata of somedatasets, e.g., input BUFR files that are missing location metadata but contain the WIGOS identification.")
+    Container(IngestionService, "Ingestion API", "?", "Validate forward to data and metadata store.")
+    Container(SingleBufrReceiver, "Bufr files decoder", "?", "Receive, validate, enrich (e.g., input files that are missing location metadata but contain the WIGOS identification), and transform BUFR to E-SOH format.")
+    Container(CustomBufrReceiver, "Bufr files decoder for weird stuff", "?", "Receive, validate, enrich (e.g., input files that are missing location metadata but contain the WIGOS identification), and transform weird BUFR to E-SOH format.")
 
     'System(records, "Search API", "OGC Records. Direct local access can be enabled depending on the local data policy.", $tags = "microService")
 
-    System(bufr_generator, "BUFR generation", "BUFR files are created to maintain backward compatibility.")
-    System(data_store, "Data and metadata store", "Storage of 24 hours of data.")
-    System(lmar, "Logging, monitoring, alerting and reporting", "")
+    Container(bufr_generator, "BUFR generation", "?", "BUFR files are created to maintain backward compatibility.")
+    Container(lmar, "Logging, monitoring, alerting and reporting", "")
+
+
+    ContainerDb(elastic, "Elastic", "JSON", "Source of truth.")
+    ContainerDb(db, "Discovery DB", "PostGIS?", "Search interface. H-Scaling. Spatial search should be faster than directly in Elastic.")
+    Container(bootstrap, "Bootstrap", "", "Initial")
+
+    'ContainerDb(data_store, "Data and metadata store", "Storage of 24 hours of data.")
   }
 }
 
-System_Ext(oscar, "Oscar", "Wigos DB")
-System_Ext(ObsCollection,"Observations Collection", "NMHS Observation Collection system")
+SystemDb_Ext(oscar, "Oscar", "Wigos DB")
 
-Rel(data_store, queries, "rebuilds database from", "https")
+Rel(elastic, queries, "rebuilds database from", "https")
+Rel(queries, elastic, "backs up database in", "https")
 Rel(wis2, queries, "catches up with missed events from", "https")
 Rel(femdi, queue, "listens for events from", "MQTT")
-Rel(data_store, femdi, "references persistent metadata in", "uri")
-Rel(queries,  data_store, "search and access", "")
+Rel(elastic, femdi, "references persistent metadata in", "uri")
+Rel(queries,  db, "search and access", "")
 Rel(queries,  femdi, "search and access data older than 24 hours in", "https")
 Rel(bufr_generator, queries, "finds and gets data from", "https")
-
-Rel(its, data_store, "adds (meta)data in", "geojson")
-Rel(data_store, queue, "sends data notification to", "MQTT")
 
 Rel(wis2, queue, "listens for events from", "MQTT")
 
@@ -53,7 +61,22 @@ Rel(consumer, wis2, "listens for events from", "MQTT")
 Rel(proxy, queries, "gateway to", "https")
 Rel(femdi, proxy, "gateway to", "https")
 
-Rel(its, oscar, "gets station metadata from", "https")
-Rel(ObsCollection, its, "observations data to", "?")
+Rel_U(SingleBufrReceiver, oscar, "gets station metadata from", "https")
+Rel_U(CustomBufrReceiver, oscar, "gets station metadata from", "https")
+
+
+Rel(SingleBufrReceiver, IngestionService, "Sends transformed bufr data to", "https/json")
+Rel(CustomBufrReceiver, IngestionService, "Sends transformed bufr data to", "https/json")
+Rel(NMHSObs1, SingleBufrReceiver, "Sends bufr files to", "http POST")
+Rel(NMHSObs2, CustomBufrReceiver, "Sends bufr files to", "?")
+Rel(NMHSObs3, IngestionService, " Sends observations to", "https/json")
+Rel(IngestionService, elastic, "Stores data in", "?")
+
+Rel(elastic, db, "ingests (meta)data in", "")
+Rel(elastic, queue, "sends data notification to", "MQTT")
+Rel(consumer, queue, "listens to events from", "https")
+
+Rel_U(bootstrap, queries, "?", "")
+Rel_D(bootstrap, db, "?", "")
 
 @enduml
