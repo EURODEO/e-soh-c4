@@ -3,10 +3,9 @@
 
 AddElementTag("microService", $shape=EightSidedShape(), $bgColor="CornflowerBlue", $fontColor="white", $legendText="micro service\neight sided")
 
+SystemDb_Ext(oscar, "Oscar", "Wigos DB")
 System_Ext(femdi, "FEMDI", "Includes the FEMDI gateway, message broker, metadata catalog and authentication and authorization.")
-
 System_Ext(wis2, "WIS2.0", "Global cache, broker, message transformation and metadata catalog. WIS2.0 takes care of publishing the BUFR files on GTS.")
-
 System_Ext(NMHSObs1,"NMHS 1 Observation System", "NMHS 1 Collect, quality control and distribute observations.")
 System_Ext(NMHSObs2,"NMHS 2 Observation System", "NMHS 2 Collect, quality control and distribute observations.")
 System_Ext(NMHSObs3,"NMHS 3 Observation System", "NMHS 3 Collect, quality control and distribute observations.")
@@ -39,41 +38,41 @@ Enterprise_Boundary(esoh_all, "E-SOH federated system"){
   }
 }
 
-SystemDb_Ext(oscar, "Oscar", "Wigos DB")
+Rel_D(NMHSObs1, SingleBufrReceiver, "Sends bufr files to", "http POST")
+Rel_D(NMHSObs2, CustomBufrReceiver, "Sends bufr files to", "?")
 
-Rel(elastic, queries, "rebuilds database from", "https")
+Rel_U(SingleBufrReceiver, oscar, "gets station metadata from", "https")
+Rel_U(CustomBufrReceiver, oscar, "gets station metadata from", "https")
+
+Rel_D(NMHSObs3, IngestionService, " Sends observations to", "https/json")
+Rel_D(SingleBufrReceiver, IngestionService, "Sends transformed bufr data to", "https/json")
+Rel_D(CustomBufrReceiver, IngestionService, "Sends transformed bufr data to", "https/json")
+
+Rel_D(IngestionService, elastic, "Stores data in", "?")
+
+Rel_R(elastic, queries, "rebuilds database from", "https")
+Rel(elastic, femdi, "references persistent metadata in", "uri")
+Rel_L(elastic, db, "ingests (meta)data in", "")
+Rel_U(elastic, queue, "sends data notification to", "MQTT")
+
 Rel(queries, elastic, "backs up database in", "https")
 Rel(wis2, queries, "catches up with missed events from", "https")
 Rel(femdi, queue, "listens for events from", "MQTT")
-Rel(elastic, femdi, "references persistent metadata in", "uri")
 Rel(queries,  db, "search and access", "")
 Rel(queries,  femdi, "search and access data older than 24 hours in", "https")
-Rel(bufr_generator, queries, "finds and gets data from", "https")
 
 Rel(wis2, queue, "listens for events from", "MQTT")
 
+Rel_U(bufr_generator, queries, "finds and gets data from", "https")
 Rel(wis2, bufr_generator, "gets data from", "BUFR")
 
 Rel(consumer, femdi, "searches and accesses data in", "https")
 Rel(consumer, femdi, "listens for events from", "MQTT")
 Rel(consumer, wis2, "searches and accesses data in", "https")
 Rel(consumer, wis2, "listens for events from", "MQTT")
-Rel(proxy, queries, "gateway to", "https")
-Rel(femdi, proxy, "gateway to", "https")
+Rel_L(proxy, queries, "gateway to", "https")
+Rel_D(femdi, proxy, "gateway to", "https")
 
-Rel_U(SingleBufrReceiver, oscar, "gets station metadata from", "https")
-Rel_U(CustomBufrReceiver, oscar, "gets station metadata from", "https")
-
-
-Rel(SingleBufrReceiver, IngestionService, "Sends transformed bufr data to", "https/json")
-Rel(CustomBufrReceiver, IngestionService, "Sends transformed bufr data to", "https/json")
-Rel(NMHSObs1, SingleBufrReceiver, "Sends bufr files to", "http POST")
-Rel(NMHSObs2, CustomBufrReceiver, "Sends bufr files to", "?")
-Rel(NMHSObs3, IngestionService, " Sends observations to", "https/json")
-Rel(IngestionService, elastic, "Stores data in", "?")
-
-Rel(elastic, db, "ingests (meta)data in", "")
-Rel(elastic, queue, "sends data notification to", "MQTT")
 Rel(consumer, queue, "listens to events from", "https")
 
 Rel_U(bootstrap, queries, "?", "")
