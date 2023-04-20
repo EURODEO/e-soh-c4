@@ -21,7 +21,7 @@ Enterprise_Boundary(esoh_all, "E-SOH federated system"){
 
     Container(queries, "Search, Access and Replay APIs", "e.g., pygeoapi", "OGC EDR and Records. Replay API is backup for the ITS system, and queue replay. Direct local access can be enabled depending on the local data policy.", $tags = "microService")
 
-    Container(IngestionService, "Ingestion", "?", "Validate incoming, and forward to data and metadata store.")
+    Container(IngestionService, "Ingestion", "?", "Validate incoming, and forward to data and metadata store. API or object-store?")
     Container(SingleBufrReceiver, "Bufr files decoder", "?", "Receive, validate, enrich (e.g., input files that are missing location metadata but contain the WIGOS identification), and transform BUFR to E-SOH format.")
     Container(CustomBufrReceiver, "Bufr files decoder for weird stuff", "?", "Receive, validate, enrich (e.g., input files that are missing location metadata but contain the WIGOS identification), and transform weird BUFR to E-SOH format.")
 
