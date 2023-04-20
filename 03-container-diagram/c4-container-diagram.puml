@@ -9,6 +9,7 @@ System_Ext(wis2, "WIS2.0", "Global cache, broker, message transformation and met
 System_Ext(NMHSObs1,"NMHS 1 Observation System", "NMHS 1 Collect, quality control and distribute observations.")
 System_Ext(NMHSObs2,"NMHS 2 Observation System", "NMHS 2 Collect, quality control and distribute observations.")
 System_Ext(NMHSObs3,"NMHS 3 Observation System", "NMHS 3 Collect, quality control and distribute observations.")
+System_Ext(NMHSObs4,"NMHS 4 Observation System", "NMHS 4 Collect, quality control and distribute observations on own MQTT event queue.")
 
 Person(consumer, "Data Consumer")
 
@@ -20,7 +21,7 @@ Enterprise_Boundary(esoh_all, "E-SOH federated system"){
 
     Container(queries, "Search, Access and Replay APIs", "e.g., pygeoapi", "OGC EDR and Records. Replay API is backup for the ITS system, and queue replay. Direct local access can be enabled depending on the local data policy.", $tags = "microService")
 
-    Container(IngestionService, "Ingestion API", "?", "Validate forward to data and metadata store.")
+    Container(IngestionService, "Ingestion", "?", "Validate incoming, and forward to data and metadata store.")
     Container(SingleBufrReceiver, "Bufr files decoder", "?", "Receive, validate, enrich (e.g., input files that are missing location metadata but contain the WIGOS identification), and transform BUFR to E-SOH format.")
     Container(CustomBufrReceiver, "Bufr files decoder for weird stuff", "?", "Receive, validate, enrich (e.g., input files that are missing location metadata but contain the WIGOS identification), and transform weird BUFR to E-SOH format.")
 
@@ -44,9 +45,10 @@ Rel_D(NMHSObs2, CustomBufrReceiver, "Sends bufr files to", "?")
 Rel_U(SingleBufrReceiver, oscar, "gets station metadata from", "https")
 Rel_U(CustomBufrReceiver, oscar, "gets station metadata from", "https")
 
-Rel_D(NMHSObs3, IngestionService, " Sends observations to", "https/json")
-Rel_D(SingleBufrReceiver, IngestionService, "Sends transformed bufr data to", "https/json")
-Rel_D(CustomBufrReceiver, IngestionService, "Sends transformed bufr data to", "https/json")
+Rel_L(NMHSObs3, IngestionService, "sends observations to", "")
+Rel_R(IngestionService, NMHSObs4, "listens to events from", "")
+Rel_D(SingleBufrReceiver, IngestionService, "sends transformed bufr data to", "")
+Rel_D(CustomBufrReceiver, IngestionService, "sends transformed bufr data to", "")
 
 Rel_D(IngestionService, elastic, "Stores data in", "?")
 
