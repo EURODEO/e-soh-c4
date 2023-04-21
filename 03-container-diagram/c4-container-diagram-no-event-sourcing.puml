@@ -1,0 +1,73 @@
+@startuml "c4-container-diagram"
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+AddElementTag("microService", $shape=EightSidedShape(), $bgColor="CornflowerBlue", $fontColor="white", $legendText="micro service\neight sided")
+
+SystemDb_Ext(oscar, "Oscar", "Wigos DB")
+System_Ext(femdi, "FEMDI", "Includes the FEMDI gateway, message broker, metadata catalog and authentication and authorization.")
+System_Ext(wis2, "WIS2.0", "Global cache, broker, message transformation and metadata catalog. WIS2.0 takes care of publishing the BUFR files on GTS.")
+System_Ext(NMHSObs1,"NMHS 1 Observation System", "NMHS 1 Collect, quality control and distribute observations.")
+System_Ext(NMHSObs2,"NMHS 2 Observation System", "NMHS 2 Collect, quality control and distribute observations.")
+System_Ext(NMHSObs3,"NMHS 3 Observation System", "NMHS 3 Collect, quality control and distribute observations.")
+System_Ext(NMHSObs4,"NMHS 4 Observation System", "NMHS 4 Collect, quality control and distribute observations on own MQTT event queue.")
+
+Person(consumer, "Data Consumer")
+
+Enterprise_Boundary(esoh_all, "E-SOH federated system"){
+  System(proxy, "Central E-SOH API end-point", "Central end-point linking the E-SOH local instances to provide a unified interface.")
+
+  System_Boundary(esoh_fed, "E-SOH local instance"){
+    ContainerQueue(queue, "Notification Service", "nats/mosquitto/..?", "MQTT broker. WIS2 real-time data sharing by a publication/subscription (PubSub).")
+
+    Container(api, "Search, Access and Replay APIs", "e.g., pygeoapi", "OGC EDR (data), OGC Records (metadata), OGC Feature (replay). Replay API allows access to historical events/notifications.", $tags = "microService")
+
+    Container(IngestionService, "Ingestion", "?", "Validate incoming, and forward to data and metadata store. API or object-store?")
+    Container(SingleBufrReceiver, "Bufr files decoder", "?", "Receive, validate, enrich (e.g., input files that are missing location metadata but contain the WIGOS identification), and transform BUFR to E-SOH format.")
+    Container(CustomBufrReceiver, "Bufr files decoder for weird stuff", "?", "Receive, validate, enrich (e.g., input files that are missing location metadata but contain the WIGOS identification), and transform weird BUFR to E-SOH format.")
+
+    Container(bufr_generator, "BUFR generation", "?", "BUFR files are created to maintain backward compatibility.")
+    Container(lmar, "Logging, monitoring, alerting and reporting", "")
+
+    ContainerDb(db, "Data and metadata store", "PostGIS?", "Contains a view/projection of the (meta)data that is optimised for API queries.")
+    ContainerDb(NotificationStore, "Notidication Store", "Elastic?", "Stores notifications for use by the Replay API")
+
+  }
+}
+
+Rel(NMHSObs1, SingleBufrReceiver, "Sends bufr files to", "http POST")
+Rel(NMHSObs2, CustomBufrReceiver, "Sends bufr files to", "?")
+
+Rel(SingleBufrReceiver, oscar, "gets station metadata from", "https")
+Rel(CustomBufrReceiver, oscar, "gets station metadata from", "https")
+
+Rel(NMHSObs3, IngestionService, "sends observations to", "")
+Rel(IngestionService, NMHSObs4, "listens to events from", "")
+Rel(SingleBufrReceiver, IngestionService, "sends transformed bufr data to", "")
+Rel(CustomBufrReceiver, IngestionService, "sends transformed bufr data to", "")
+
+Rel(IngestionService, db, "add (meta)data", "?")
+Rel(IngestionService, queue, "(meta)data notifications", "JSON")
+
+Rel(wis2, api, "catches up with missed events (replay) from", "https")
+Rel(femdi, queue, "listens for events from", "MQTT")
+Rel(api,  db, "search and access data", "JSON")
+Rel(api,  femdi, "search and access data older than 24 hours in", "https")
+
+Rel(wis2, queue, "listens for events from", "MQTT")
+
+Rel(bufr_generator, api, "finds and gets data from", "https")
+Rel(wis2, bufr_generator, "gets data from", "BUFR")
+
+Rel(consumer, femdi, "searches and accesses data in", "https")
+Rel(consumer, femdi, "listens for events from", "MQTT")
+Rel(consumer, wis2, "searches and accesses data in", "https")
+Rel(consumer, wis2, "listens for events from", "MQTT")
+Rel(proxy, api, "gateway to", "https")
+Rel(femdi, proxy, "gateway to", "https")
+
+Rel(consumer, queue, "listens to events from", "https")
+
+Rel(IngestionService, NotificationStore, "(meta)data notifications", "JSON");
+Rel(api, NotificationStore, "request events (replay)", "JSON?")
+
+@enduml
