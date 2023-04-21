@@ -67,7 +67,7 @@ Rel(femdi, proxy, "gateway to", "https")
 
 Rel(consumer, queue, "listens to events from", "https")
 
-Rel(IngestionService, NotificationStore, "(meta)data notifications", "JSON");
+Rel(queue, NotificationStore, "(meta)data notifications", "JSON");
 Rel(api, NotificationStore, "request events (replay)", "JSON?")
 
 @enduml
