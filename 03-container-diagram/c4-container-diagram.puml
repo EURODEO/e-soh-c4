@@ -1,83 +1,47 @@
 @startuml "c4-container-diagram"
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
-AddElementTag("microService", $shape=EightSidedShape(), $bgColor="CornflowerBlue", $fontColor="white", $legendText="micro service\neight sided")
+'LAYOUT_TOP_DOWN()
+LAYOUT_LEFT_RIGHT()
 
-SystemDb_Ext(oscar, "Oscar", "Wigos DB")
-System_Ext(femdi, "FEMDI", "Includes the FEMDI gateway, message broker, metadata catalog and authentication and authorization.")
-System_Ext(wis2, "WIS2.0", "Global cache, broker, message transformation and metadata catalog. WIS2.0 takes care of publishing the BUFR files on GTS.")
-System_Ext(NMHSObs1,"NMHS 1 Observation System", "NMHS 1 Collect, quality control and distribute observations.")
-System_Ext(NMHSObs2,"NMHS 2 Observation System", "NMHS 2 Collect, quality control and distribute observations.")
-System_Ext(NMHSObs3,"NMHS 3 Observation System", "NMHS 3 Collect, quality control and distribute observations.")
-System_Ext(NMHSObs4,"NMHS 4 Observation System", "NMHS 4 Collect, quality control and distribute observations on own MQTT event queue.")
+System_Ext(wis2shared, "WIS2.0 Shared Services", "Catalogue, Message Broker, Service manager, BUFR to GTS forwarding.")
+SystemDb_Ext(oscar, "WMO OSCAR", "WMO WIGOS metadata DB")
+System_Ext(obscoll,"Observations Collection", "NMHS Observation Collection system")
+System(centralapi, "Central E-SOH API end-point", "Central end-point linking the E-SOH local instances to provide a unified interface.")
 
-Person(consumer, "Data Consumer")
-
-Enterprise_Boundary(esoh_all, "E-SOH federated system"){
-  System(proxy, "Central E-SOH API end-point", "Central end-point linking the E-SOH local instances to provide a unified interface.")
-
-  System_Boundary(esoh_fed, "E-SOH local instance"){
+System_Boundary(esoh, "E-SOH local instance"){
     ContainerQueue(queue, "Notification Service", "nats/mosquitto/..?", "MQTT Event Queue. WIS2 real-time data sharing by a publication/subscription (PubSub) mechanism based on the Message Queuing Protocol (MQP).")
 
-    Container(queries, "Search, Access and Replay APIs", "e.g., pygeoapi", "OGC EDR and Records. Replay API is backup for the ITS system, and queue replay. Direct local access can be enabled depending on the local data policy.", $tags = "microService")
+    Container(queries, "Search and Access APIs", "e.g., pygeoapi", "OGC EDR and Records. Direct local access can be enabled depending on the local data policy.", $tags = "microService")
 
-    Container(IngestionService, "Ingestion", "?", "Validate incoming, and forward to data and metadata store. API or object-store?")
-    Container(SingleBufrReceiver, "Bufr files decoder", "?", "Receive, validate, enrich (e.g., input files that are missing location metadata but contain the WIGOS identification), and transform BUFR to E-SOH format.")
-    Container(CustomBufrReceiver, "Bufr files decoder for weird stuff", "?", "Receive, validate, enrich (e.g., input files that are missing location metadata but contain the WIGOS identification), and transform weird BUFR to E-SOH format.")
+    Container(ingestion, "Ingestion", "?", "Validate incoming, and forward to data and metadata store. API or object-store?")
+    Container(decoder, "Input decoder", "?", "Decode input data (e.g., BUFR, CSV), validate and enrich (e.g., input files that are missing location metadata but contain the WIGOS identification), and write to E-SOH format.")
 
     'System(records, "Search API", "OGC Records. Direct local access can be enabled depending on the local data policy.", $tags = "microService")
 
-    Container(bufr_generator, "BUFR generation", "?", "BUFR files are created to maintain backward compatibility.")
+    Container(output_encoder, "Output encoder", "?", "Output files (e.g., BUFR) are created based on API query.")
     Container(lmar, "Logging, monitoring, alerting and reporting", "")
 
 
-    ContainerDb(elastic, "Elastic", "JSON", "Source of truth.")
-    ContainerDb(db, "Discovery DB", "PostGIS?", "Search interface. H-Scaling. Spatial search should be faster than directly in Elastic.")
-    Container(bootstrap, "Bootstrap", "", "Initial")
+    ContainerDb(store, "Data and Metadata Store", "", "Storage of 24 hours of data and indexing.")
 
-    'ContainerDb(data_store, "Data and metadata store", "Storage of 24 hours of data.")
-  }
 }
 
-Rel_D(NMHSObs1, SingleBufrReceiver, "Sends bufr files to", "http POST")
-Rel_D(NMHSObs2, CustomBufrReceiver, "Sends bufr files to", "?")
+Rel_D(obscoll, ingestion, "pushes data to")
+Rel_U(ingestion, obscoll, "listens to event queue, and pulls data from")
+Rel(ingestion, decoder, "transforms data using", "")
+Rel_L(decoder, oscar, "gets metadata from", "https")
 
-Rel_U(SingleBufrReceiver, oscar, "gets station metadata from", "https")
-Rel_U(CustomBufrReceiver, oscar, "gets station metadata from", "https")
+Rel_U(wis2shared, queries, "pulls BUFR data from")
+Rel_U(wis2shared, queue, "listens to event queue")
 
-Rel_L(NMHSObs3, IngestionService, "sends observations to", "")
-Rel_R(IngestionService, NMHSObs4, "listens to events from", "")
-Rel_D(SingleBufrReceiver, IngestionService, "sends transformed bufr data to", "")
-Rel_D(CustomBufrReceiver, IngestionService, "sends transformed bufr data to", "")
+Rel_U(queries, output_encoder, "generates output data using")
+Rel_U(centralapi, queries, "pulls data from")
+Rel_U(centralapi, queue, "listens to event queue")
 
-Rel_D(IngestionService, elastic, "Stores data in", "?")
+Rel(ingestion, store, "stores data and metadata in", "?")
+Rel(ingestion, queue, "sends notification to", "MQTT")
 
-Rel_R(elastic, queries, "rebuilds database from", "https")
-Rel(elastic, femdi, "references persistent metadata in", "uri")
-Rel_L(elastic, db, "ingests (meta)data in", "")
-Rel_U(elastic, queue, "sends data notification to", "MQTT")
-
-Rel(queries, elastic, "backs up database in", "https")
-Rel(wis2, queries, "catches up with missed events from", "https")
-Rel(femdi, queue, "listens for events from", "MQTT")
-Rel(queries,  db, "search and access", "")
-Rel(queries,  femdi, "search and access data older than 24 hours in", "https")
-
-Rel(wis2, queue, "listens for events from", "MQTT")
-
-Rel_U(bufr_generator, queries, "finds and gets data from", "https")
-Rel(wis2, bufr_generator, "gets data from", "BUFR")
-
-Rel(consumer, femdi, "searches and accesses data in", "https")
-Rel(consumer, femdi, "listens for events from", "MQTT")
-Rel(consumer, wis2, "searches and accesses data in", "https")
-Rel(consumer, wis2, "listens for events from", "MQTT")
-Rel_L(proxy, queries, "gateway to", "https")
-Rel_D(femdi, proxy, "gateway to", "https")
-
-Rel(consumer, queue, "listens to events from", "https")
-
-Rel_U(bootstrap, queries, "?", "")
-Rel_D(bootstrap, db, "?", "")
+Rel_U(queries, store, "search and access data")
 
 @enduml
