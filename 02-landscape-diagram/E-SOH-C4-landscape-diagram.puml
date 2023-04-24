@@ -32,7 +32,7 @@ Enterprise_Boundary(esoh_all, "E-SOH federated system"){
 
 ' WIS2 box:
 System_Boundary(wis2shared_all, "WIS2 shared services"){
-    System_Ext(wis2shared, "WIS2.0 Shared Services", "Catalogue, Message Broker, Service manager")
+    System_Ext(wis2shared, "WIS2.0 Shared Services", "Catalogue, Message Broker, Service manager, BUFR to GTS forwarding.")
     'System_Ext(wis2gts, "WMO WIS2.0 GTS relay", "Relay the BUFR files into GTS.")
 }
 
