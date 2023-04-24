@@ -21,6 +21,7 @@ System_Ext(consys, "Consumer systems", "Existing and new consumer systems")
 Person_Ext(enduser, "Data end-users", "Data end-users will connect to consumer systems")
 
 Rel_R(esoh, consys, "Data&metadata")
+Rel_L(enduser, consys, "visualizes data in")
 
 'layout wishes:
 Lay_R(consys, enduser)
