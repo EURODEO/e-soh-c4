@@ -1,4 +1,4 @@
-@startuml "c4-container-data-store"
+@startuml "c4-container-elastic-data-store-event"
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
 AddElementTag("microService", $shape=EightSidedShape(), $bgColor="CornflowerBlue", $fontColor="white", $legendText="micro service\neight sided")
