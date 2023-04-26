@@ -28,8 +28,7 @@ Enterprise_Boundary(esoh_all, "E-SOH federated system"){
     Container(bufr_generator, "BUFR generation", "?", "BUFR files are created to maintain backward compatibility.")
     Container(lmar, "Logging, monitoring, alerting and reporting", "")
 
-    ContainerDb(db, "Data and metadata store", "PostGIS?", "Contains a view/projection of the (meta)data that is optimised for API queries.")
-    ContainerDb(NotificationStore, "Notidication Store", "Elastic?", "Stores notifications for use by the Replay API")
+    ContainerDb(db, "Data and metadata store", "Relational or Document based Database", "Contains a view/projection of the (meta)data that is optimised for API queries. (There are different choices for databases, either a relational, a document based or a hybrid of the two, described in the technical architecture)")
 
   }
 }
@@ -67,7 +66,5 @@ Rel(femdi, proxy, "gateway to", "https")
 
 Rel(consumer, queue, "listens to events from", "https")
 
-Rel(queue, NotificationStore, "(meta)data notifications", "JSON");
-Rel(api, NotificationStore, "request events (replay)", "JSON?")
 
 @enduml
