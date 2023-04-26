@@ -28,7 +28,7 @@ Enterprise_Boundary(esoh_all, "E-SOH federated system"){
     Container(bufr_generator, "BUFR generation", "?", "BUFR files are created to maintain backward compatibility.")
     Container(lmar, "Logging, monitoring, alerting and reporting", "")
 
-    ContainerDb(db, "Data and metadata store", "PostGIS?", "Contains a view/projection of the (meta)data that is optimised for API queries.")
+    ContainerDb(db, "Data and metadata store", "Relational or Document based Database", "Contains a view/projection of the (meta)data that is optimised for API queries. (There are different choices for databases, either a relational, a document based or a hybrid of the two, described in the technical architecture)")
 
   }
 }
