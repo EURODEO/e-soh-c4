@@ -1,4 +1,4 @@
-@startuml "c4-container-relational-data-store"
+@startuml "c4-container-elastic-data-store-conventional"
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
 '1C
